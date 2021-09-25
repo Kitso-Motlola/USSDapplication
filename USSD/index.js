@@ -16,7 +16,9 @@ const transaction = require('./models/transaction')
 const app = express();
 const PORT = 8000
 
-// Establish connecvtion to database:
+var charge = 0; // holds taxi fare
+
+// Establish connection to database:
 mongoose.connect(database_url);
 const db = mongoose.connection;
 db.on('error', (err) => {
@@ -38,39 +40,33 @@ app.get('/', (req, res) => {
 
 app.post('/', (req, res) => {
     const { phoneNumber, text, sessionId } = req.body;
-    var charge = 0;
-
     let response;
     let array = text.split('*');
 
     if (array[0] === '') { // First menu
         response = 'CON Welcome, please select the service you would like to use:\n 1. Use Taxi Service. \n 2. Register for taxi service.\n 3. Account Details.\n'
+        charge = 0;
     }
 
     //************************************************************************ USE TAXI SERVICES ***********************************************************************************:
 
     else if ((array[0] === '1') && (array.length === 1)) {
-        var validation = false;
-        //retrieve location destinations
-        user.countDocuments({phoneNumber:phoneNumber},function(err,data){
-            if(err){
+
+        user.countDocuments({ phoneNumber: phoneNumber }, function (err, data) {
+            if (err) {
                 console.log(err);
                 response = 'END Network error, please try again later. \n';
             }
-            else{
+            else {
                 console.log(data);
-                if(data>0){
-                    validation = true;
+                if (data > 0) {
+                    response = 'CON Please select your destination:\n 1. Stellenbosch Central \n 2. Idasvalley \n 3. Cloetesville \n'; // user registered.                
+                }
+                else {
+                    response = 'END You may not be a registered user. \n'; // user not registered throw ERROR!!!
                 }
             }
         })
-        // Check whether user is registered
-        if (validation) {
-            response = 'CON Please select your destination:\n 1. Stellenbosch Central \n 2. Idasvalley \n 3. Cloetesville \n'; // return possible destinations
-        }
-        else {
-            response = 'END You may not be a registered user. \n';
-        }
     }
     //_____________ Chosen destination __________________:
 
@@ -90,34 +86,108 @@ app.post('/', (req, res) => {
     //_____________________ Pays ________________:
 
     else if ((array[0] === '1') && (array[1] === '1') && (array[2] === '1') && (array.length === 3)) {
-        response = 'END Thank you for using our service.';
+
+        user.findOne({ phoneNumber: phoneNumber }, function (err, data) {
+            if (err) {
+                console.log("Error completing payment: " + err);
+            }
+            else {
+                var balance = data.Acc_balance;
+                balance = balance - charge;
+                user.findOneAndUpdate({ phoneNumber: phoneNumber }, { $set: { Acc_balance: balance } }, function (err) {
+                    if (err) {
+                        console.log("Error completing payment :" + err);
+                        response = 'END Payment could not be completed. Try again later. \n'; // throw error.
+                        
+                    }
+                    else {
+                        response = 'END Thank you for using our service. \n'; // payment completing 
+                        
+                    }
+                })
+            }
+        })
     }
     else if ((array[0] === '1') && (array[1] === '2') && (array[2] === '1') && (array.length === 3)) {
-        response = 'END Thank you for using our service.';
+
+        user.findOne({ phoneNumber: phoneNumber }, function (err, data) {
+            if (err) {
+                console.log("Error completing payment: " + err);
+            }
+            else {
+                var balance = data.Acc_balance;
+                balance = balance - charge;
+                user.findOneAndUpdate({ phoneNumber: phoneNumber }, { $set: { Acc_balance: balance } }, function (err) {
+                    if (err) {
+                        console.log("Error completing payment :" + err);
+                        response = 'END Payment could not be completed. Try again later. \n'; // throw error.
+                        
+                    }
+                    else {
+                        response = 'END Thank you for using our service. \n'; // payment completing 
+                        
+                    }
+                })
+            }
+        })
     }
     else if ((array[0] === '1') && (array[1] === '3') && (array[2] === '1') && (array.length === 3)) {
-        response = 'END Thank you for using our service.';
+
+        user.findOne({ phoneNumber: phoneNumber }, function (err, data) {
+            if (err) {
+                console.log("Error completing payment: " + err);
+            }
+            else {
+                var balance = data.Acc_balance;
+                balance = balance - charge;
+                user.findOneAndUpdate({ phoneNumber: phoneNumber }, { $set: { Acc_balance: balance } }, function (err) {
+                    if (err) {
+                        console.log("Error completing payment :" + err);
+                        response = 'END Payment could not be completed. Try again later. \n'; // throw error.
+                        
+                    }
+                    else {
+                        response = 'END Thank you for using our service. \n'; // payment completing 
+                        
+                    }
+                })
+            }
+        })
     }
 
     //_________________ Cancels _______________:
 
     else if ((array[0] === '1') && (array[1] === '1') && (array[2] === '2') && (array.length === 3)) {
         response = 'END Please disembark Taxi or restart the service. Thank you.';
-        charge = 0;
+        
     }
     else if ((array[0] === '1') && (array[1] === '2') && (array[2] === '2') && (array.length === 3)) {
         response = 'END Please disembark Taxi or restart the service. Thank you.';
-        charge = 0;
+        
     }
     else if ((array[0] === '1') && (array[1] === '3') && (array[2] === '2') && (array.length === 3)) {
         response = 'END Please disembark Taxi or restart the service. Thank you.';
-        charge = 0;
+        
     }
 
     //************************************************************************ REGISTER ***********************************************************************************:
 
     else if ((array[0] === '2') && (array.length === 1)) {
-        response = 'CON Please enter your South African ID number:\n';
+        user.countDocuments({ phoneNumber: phoneNumber }, function (err, data) {
+            if (err) {
+                console.log(err);
+                response = 'END Network error, please try again later. \n';
+            }
+            else {
+                console.log(data);
+                if (data == 0) {
+                    response = 'CON Please enter your South African ID number:\n'; // register user.                
+                }
+                else {
+                    response = 'END User already registered. \n'; // user already registered throw ERROR!!!
+                }
+            }
+        })
     }
     else if ((array[0] === '2') && (array[1] != '') && (array.length === 2)) {
         response = 'CON Please enter your full name:\n';
@@ -139,16 +209,46 @@ app.post('/', (req, res) => {
         data.WiFi_MAC_addrs = array[3];
         data.Bluetooth_MAC_addrs = array[4];
         data.Acc_balance = 0;
-
-        data.save(() => {
-            response = 'END registration successful.';
+        data.save(function (err, data) {
+            if (err) {
+                console.log("Error saving data: " + err);
+                response = 'END User NOT registered, please try again later. \n'; // could not save data.
+            }
+            else {
+                response = 'END registration successful.'; // successful registration.
+            }
         })
     }
     else if ((array[0] === '2') && (array[5] === '2') && (array.length === 6)) {
-        response = 'END registration process terminated.';
+        response = 'END registration process terminated.'; // user terminated registration.
     }
 
     //************************************************************************ ACCOUNT DETAILS ***********************************************************************************:
+    else if ((array[0] === '3') && (array.length === 1)) {
+        user.countDocuments({ phoneNumber: phoneNumber }, function (err, data) {
+            if (err) {
+                console.log(err);
+                response = 'END Network error, please try again later. \n';
+            }
+            else {
+                console.log(data);
+                if (data > 0) {
+                    response = 'CON Please select the menu item you would like to review:\n 1. Account Balance.\n 2. View Transactions.\n'; // user is registered.                
+                }
+                else {
+                    response = 'END You may not be a registered user. \n'; // user not registered throw ERROR!!!
+                }
+            }
+        })
+    }
+    else if ((array[0] === '3') && (array[1] === '1') && (array.length === 2)) {
+        response = 'END Virtual-wallet balance: ' + ' . \n';
+    }
+    else if ((array[0] === '3') && (array[1] === '2') && (array.length === 2)) {
+        response = 'END Still under development. \n';
+    }
+
+
 
 
 
