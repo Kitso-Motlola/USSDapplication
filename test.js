@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 // Database URL:
-const database_url = 'mongodb+srv://Kitso:Sun19971214@cluster0.qnb0r.mongodb.net/TaxiService?retryWrites=true&w=majority';
+const database_url = 'mongodb+srv://user:password@cluster0.qnb0r.mongodb.net/Database?retryWrites=true&w=majority';
 
 // Mongoose Models:
 const user = require('./models/user');
